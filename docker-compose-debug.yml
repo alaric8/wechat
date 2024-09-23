@@ -1,0 +1,58 @@
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+     - "./nginx.conf:/etc/nginx/conf.d/default.conf"
+    depends_on:
+      - app
+  app:
+    image: ghcr.io/alaric8/topthink:latest
+    env_file:
+      - ".env"
+    volumes:
+      - "./workspace/php/admin:/www/app/admin"
+  redis:
+    image: redis:latest
+  mysql:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - "3306"
+    env_file:
+      - ".env"
+    volumes:
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+  vue:
+    image: ghcr.io/alaric8/lottery-admin:latest
+    ports:
+      - "5173:5173"
+    volumes:
+      - "./workspace/manage:/app/src/views"
+    environment:
+      - API_HOST=nginx
+    depends_on:
+      - app 
+      - nginx
+      - mysql
+  uniapp:
+    image: ghcr.io/alaric8/docker-uniapp:latest
+    ports:
+      - "5174:5173"
+    volumes:
+      - "./workspace/uniapp:/app/src/pages"
+      - "./config/pages.json:/app/src/pages.json"
+    depends_on:
+      - vue
+      - app 
+      - nginx
+      - mysql
+volumes:
+  h5:
+     driver: local
+  vue:
+     driver: local
+  storage:
+     driver: local
+  
